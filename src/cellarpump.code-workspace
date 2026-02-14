@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../../Arduino/cellarpump"
+		},
+		{
+			"name": "cellarpump",
+			"path": ".."
+		}
+	],
+	"settings": {}
+}
