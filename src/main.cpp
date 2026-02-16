@@ -8,12 +8,14 @@
 
 #include <Arduino.h>
 #include <Wire.h>
+#include <EEPROM.h>
 
 // Feature toggles — comment out to disable
 #define ENABLE_SERIAL_LOGGING
 #define ENABLE_DISPLAY
 #define ENABLE_DISPLAY_RGB
 #define ENABLE_TEMP_HUMIDITY_SENSOR
+#define ENABLE_PRESET_BUTTON
 
 // ENABLE_DISPLAY_RGB implies ENABLE_DISPLAY
 #ifdef ENABLE_DISPLAY_RGB
@@ -28,20 +30,85 @@
 
 const int RELAY_PIN = 4; // Grove Relay on digital pin 4
 
+#ifdef ENABLE_PRESET_BUTTON
+const int BUTTON_PIN = 3; // Grove Button on digital pin 3
+#endif
+
 // =============================================================================
 // Timing Configuration (in milliseconds)
 // =============================================================================
 
-const unsigned long PUMP_ON_DURATION    = 1000UL * 60;  // seconds on
-const unsigned long PUMP_CYCLE_INTERVAL = 1000UL * 60 * 5; // minutes between activations
-const unsigned long DISPLAY_UPDATE_INTERVAL = 500; // ms between display updates
-const unsigned long SENSOR_READ_INTERVAL = 1000UL * 2; // seconds between sensor reads
+// Default durations (used when preset button is disabled, or as preset 0)
+const unsigned long DEFAULT_PUMP_ON_DURATION    = 1000UL * 60;  // seconds on
+const unsigned long DEFAULT_PUMP_CYCLE_INTERVAL = 1000UL * 60 * 5; // minutes between activations
+const unsigned long DISPLAY_UPDATE_INTERVAL     = 500; // ms between display updates
+const unsigned long SENSOR_READ_INTERVAL        = 1000UL * 2; // seconds between sensor reads
+
+// Active durations — set from preset or defaults
+unsigned long pumpOnDuration    = DEFAULT_PUMP_ON_DURATION;
+unsigned long pumpCycleInterval = DEFAULT_PUMP_CYCLE_INTERVAL;
 
 // =============================================================================
 // Backlight threshold: show green when less than 5 minutes remain
 // =============================================================================
 
 const unsigned long GREEN_THRESHOLD = 1000UL * 60 * 5; // minutes
+
+// =============================================================================
+// Preset Profiles (button cycles through these)
+// =============================================================================
+
+#ifdef ENABLE_PRESET_BUTTON
+
+struct Preset {
+  unsigned long onDuration;     // ms
+  unsigned long cycleInterval;  // ms
+  const char*   label;          // shown on LCD (max 16 chars)
+};
+
+const Preset PRESETS[] = {
+  { 60UL * 1000,  30UL * 60 * 1000,       "60s / 30min"   }, // 0 — default
+  { 60UL * 1000,  10UL * 60 * 1000,       "60s / 10min"   }, // 1
+  { 60UL * 1000,   2UL * 60 * 60 * 1000,  "60s / 2h"      }, // 2
+  { 60UL * 1000,   6UL * 60 * 60 * 1000,  "60s / 6h"      }, // 3
+  { 60UL * 1000,  24UL * 60 * 60 * 1000,  "60s / 1day"    }, // 4
+};
+const uint8_t PRESET_COUNT = sizeof(PRESETS) / sizeof(PRESETS[0]);
+
+// EEPROM layout
+const int EEPROM_ADDR_MAGIC  = 0; // 1 byte: validity marker
+const int EEPROM_ADDR_PRESET = 1; // 1 byte: preset index
+const uint8_t EEPROM_MAGIC   = 0xC7; // arbitrary marker
+
+// Button state
+const unsigned long DEBOUNCE_MS = 50;
+const unsigned long OVERLAY_DISPLAY_MS = 1000; // show preset name for 1 s
+
+uint8_t currentPreset = 0;
+bool    lastButtonState = LOW;
+unsigned long lastDebounceTime = 0;
+unsigned long overlayStartTime = 0; // when overlay was triggered
+bool overlayShowing = false;        // true while overlay is on screen
+
+void applyPreset(uint8_t idx) {
+  if (idx >= PRESET_COUNT) idx = 0;
+  currentPreset    = idx;
+  pumpOnDuration   = PRESETS[idx].onDuration;
+  pumpCycleInterval = PRESETS[idx].cycleInterval;
+}
+
+void savePresetToEEPROM(uint8_t idx) {
+  EEPROM.update(EEPROM_ADDR_MAGIC, EEPROM_MAGIC);
+  EEPROM.update(EEPROM_ADDR_PRESET, idx);
+}
+
+uint8_t loadPresetFromEEPROM() {
+  if (EEPROM.read(EEPROM_ADDR_MAGIC) != EEPROM_MAGIC) return 0;
+  uint8_t idx = EEPROM.read(EEPROM_ADDR_PRESET);
+  return (idx < PRESET_COUNT) ? idx : 0;
+}
+
+#endif // ENABLE_PRESET_BUTTON
 
 // =============================================================================
 // Global State
@@ -180,16 +247,16 @@ void updateDisplay() {
     // Show seconds remaining until pump turns off
     unsigned long elapsed = millis() - pumpStartTime;
     unsigned long remaining = 0;
-    if (elapsed < PUMP_ON_DURATION) {
-      remaining = (PUMP_ON_DURATION - elapsed) / 1000;
+    if (elapsed < pumpOnDuration) {
+      remaining = (pumpOnDuration - elapsed) / 1000;
     }
     snprintf(line2, sizeof(line2), "Pump on %lus", remaining);
   } else {
     // Show time remaining until next activation
     unsigned long elapsed = millis() - pumpStopTime;
     unsigned long remainingMs = 0;
-    if (elapsed < PUMP_CYCLE_INTERVAL) {
-      remainingMs = PUMP_CYCLE_INTERVAL - elapsed;
+    if (elapsed < pumpCycleInterval) {
+      remainingMs = pumpCycleInterval - elapsed;
     }
     unsigned long remainingSec = remainingMs / 1000;
     if (remainingSec <= 120) {
@@ -206,7 +273,8 @@ void updateDisplay() {
     setBacklightRed();
   } else {
     unsigned long elapsed = millis() - pumpStopTime;
-    if (elapsed >= PUMP_CYCLE_INTERVAL - GREEN_THRESHOLD) {
+    if (pumpCycleInterval > GREEN_THRESHOLD
+        && elapsed >= pumpCycleInterval - GREEN_THRESHOLD) {
       setBacklightGreen();
     } else {
       setBacklightOff();
@@ -258,13 +326,13 @@ void updatePump() {
   unsigned long now = millis();
 
   if (pumpRunning) {
-    // Turn off after PUMP_ON_DURATION
-    if (now - pumpStartTime >= PUMP_ON_DURATION) {
+    // Turn off after pumpOnDuration
+    if (now - pumpStartTime >= pumpOnDuration) {
       pumpOff();
     }
   } else {
-    // Turn on after PUMP_CYCLE_INTERVAL since last stop
-    if (now - pumpStopTime >= PUMP_CYCLE_INTERVAL) {
+    // Turn on after pumpCycleInterval since last stop
+    if (now - pumpStopTime >= pumpCycleInterval) {
       pumpOn();
     }
   }
@@ -289,6 +357,11 @@ void setup() {
   initDisplay();
 #endif
 
+#ifdef ENABLE_PRESET_BUTTON
+  pinMode(BUTTON_PIN, INPUT);
+  applyPreset(loadPresetFromEEPROM());
+#endif
+
   initRelay();
 
   // Upon startup, turn the pump on immediately.
@@ -304,6 +377,54 @@ void setup() {
 void loop() {
   unsigned long now = millis();
 
+  // --- Check preset button ---
+#ifdef ENABLE_PRESET_BUTTON
+  {
+    bool reading = digitalRead(BUTTON_PIN);
+    if (reading != lastButtonState) {
+      lastDebounceTime = now;
+    }
+    if ((now - lastDebounceTime) >= DEBOUNCE_MS) {
+      // Stable reading — detect rising edge (press)
+      static bool stableState = LOW;
+      if (reading != stableState) {
+        stableState = reading;
+        if (stableState == HIGH) {
+          // Button just pressed — cycle to next preset
+          uint8_t next = (currentPreset + 1) % PRESET_COUNT;
+          applyPreset(next);
+          savePresetToEEPROM(next);
+
+          // Reset pump timers: turn pump off and restart countdown
+          if (pumpRunning) {
+            digitalWrite(RELAY_PIN, LOW);
+            pumpRunning = false;
+          }
+          pumpStopTime = now;
+
+          // Show overlay on LCD
+          overlayStartTime = now;
+          overlayShowing = true;
+#ifdef ENABLE_DISPLAY
+          lcd.clear();
+          delay(2);
+          lcd.setRGB(0, 0, 100); // blue during overlay
+          lcd.print(F("Preset:"));
+          lcd.setCursor(0, 1);
+          lcd.print(PRESETS[currentPreset].label);
+#endif
+
+#ifdef ENABLE_SERIAL_LOGGING
+          Serial.print(F("Preset -> "));
+          Serial.println(PRESETS[currentPreset].label);
+#endif
+        }
+      }
+    }
+    lastButtonState = reading;
+  }
+#endif // ENABLE_PRESET_BUTTON
+
   // --- Update pump state (non-blocking) ---
   updatePump();
 
@@ -317,7 +438,16 @@ void loop() {
 
   // --- Update display periodically ---
 #ifdef ENABLE_DISPLAY
-  if (now - lastDisplayUpdate >= DISPLAY_UPDATE_INTERVAL) {
+  // Skip normal display refresh while overlay is shown
+#ifdef ENABLE_PRESET_BUTTON
+  if (overlayShowing && (now - overlayStartTime >= OVERLAY_DISPLAY_MS)) {
+    overlayShowing = false; // overlay expired — resume normal display
+  }
+  bool overlayActive = overlayShowing;
+#else
+  bool overlayActive = false;
+#endif
+  if (!overlayActive && (now - lastDisplayUpdate >= DISPLAY_UPDATE_INTERVAL)) {
     lastDisplayUpdate = now;
     updateDisplay();
   }
