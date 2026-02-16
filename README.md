@@ -36,17 +36,21 @@ Non-functional requirements:
     - Use of the temperature and humidity sensor ("#define ENABLE_TEMP_HUMIDITY_SENSOR" at the 
       top of the code)
 
-Pricing overview (estimated):
+Pricing overview:
 
 | Component                                | Setup 1<br>(basic) | Setup 2<br>(+ display) | Setup 3<br>(+Temp/Hum) |
 |------------------------------------------|-----------:|------------:|------------:|
-| Arduino Uno                              |     €25.00 |      €25.00 |      €25.00 |
-| Grove Base Shield (HAT)                  |     €10.00 |      €10.00 |      €10.00 |
-| Grove Relay v1.3                         |      €5.00 |       €5.00 |       €5.00 |
-| Submersible Pump (12V DC)                |     €15.00 |      €15.00 |      €15.00 |
-| Tube (3/8", 2m)                          |      €5.00 |       €5.00 |       €5.00 |
-| Power Supply USB (Arduino)               |      €8.00 |       €8.00 |       €8.00 |
-| Power Supply 12V 2A DC (Pump)            |     €10.00 |      €10.00 |      €10.00 |
-| Grove LCD 16x2 RGB Backlight v5.0        |          — |      €15.00 |      €15.00 |
-| Grove Temperature & Humidity Sensor v2.0 |          — |           — |      €12.00 |
-| **Total**                                | **€78.00** |  **€93.00** | **€105.00** |
+| Arduino Uno                              |     €29.50 |      €29.50 |      €29.50 |
+| Grove Base Shield (HAT)                  |      €4.00 |       €4.00 |       €4.00 |
+| Grove Relay v1.3                         |      €3.00 |       €3.00 |       €3.00 |
+| Submersible Pump (12V DC)                |      €6.00 |       €6.00 |       €6.00 |
+| Tube (3/8", 2m)                          |      €6.00 |       €6.00 |       €6.00 |
+| Power Supply USB (Arduino)               |     €12.50 |      €12.50 |      €12.50 |
+| Power Supply 12V 2A DC (Pump)            |     €15.00 |      €15.00 |      €15.00 |
+| Grove LCD 16x2 v1.0                      |          — |       €7.50 |       €7.50 |
+| Grove LCD 16x2 RGB Backlight v5.0        |          — |     (+€9.00)|     (+€9.00)|
+| Grove Temperature & Humidity Sensor v2.0 |          — |           — |       €6.00 |
+| Grove Button v1.2                        |          — |           — |      (€2.50)|
+| Grove Led Bar v2.0                       |          — |           — |      (€5.00)|
+| **Total**                                | **€76.00** |  **€83.50** |  **€89.50** |
+
