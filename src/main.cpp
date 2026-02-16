@@ -12,7 +12,15 @@
 // Feature toggles — comment out to disable
 #define ENABLE_SERIAL_LOGGING
 #define ENABLE_DISPLAY
+#define ENABLE_DISPLAY_RGB
 #define ENABLE_TEMP_HUMIDITY_SENSOR
+
+// ENABLE_DISPLAY_RGB implies ENABLE_DISPLAY
+#ifdef ENABLE_DISPLAY_RGB
+  #ifndef ENABLE_DISPLAY
+    #define ENABLE_DISPLAY
+  #endif
+#endif
 
 // =============================================================================
 // Pin Configuration
@@ -119,9 +127,13 @@ rgb_lcd lcd;
 
 void initDisplay() {
   lcd.begin(16, 2);
+#ifdef ENABLE_DISPLAY_RGB
   lcd.setRGB(0, 0, 0);
+#endif
   lcd.print("Initializing...");
 }
+
+#ifdef ENABLE_DISPLAY_RGB
 
 // Set backlight to red (pump is on)
 void setBacklightRed() {
@@ -137,6 +149,8 @@ void setBacklightGreen() {
 void setBacklightOff() {
   lcd.setRGB(0, 0, 0);
 }
+
+#endif // ENABLE_DISPLAY_RGB
 
 // Update the LCD with current status.
 void updateDisplay() {
@@ -182,6 +196,7 @@ void updateDisplay() {
   lcd.print(line2);
 
   // --- Backlight color ---
+#ifdef ENABLE_DISPLAY_RGB
   if (pumpRunning) {
     setBacklightRed();
   } else {
@@ -192,6 +207,7 @@ void updateDisplay() {
       setBacklightOff();
     }
   }
+#endif // ENABLE_DISPLAY_RGB
 }
 
 #endif // ENABLE_DISPLAY
