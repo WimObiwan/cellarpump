@@ -185,13 +185,18 @@ void updateDisplay() {
     }
     snprintf(line2, sizeof(line2), "Pump on %lus", remaining);
   } else {
-    // Show minutes remaining until next activation
+    // Show time remaining until next activation
     unsigned long elapsed = millis() - pumpStopTime;
-    unsigned long remaining = 0;
+    unsigned long remainingMs = 0;
     if (elapsed < PUMP_CYCLE_INTERVAL) {
-      remaining = (PUMP_CYCLE_INTERVAL - elapsed) / 1000 / 60;
+      remainingMs = PUMP_CYCLE_INTERVAL - elapsed;
     }
-    snprintf(line2, sizeof(line2), "Pump off %lum", remaining);
+    unsigned long remainingSec = remainingMs / 1000;
+    if (remainingSec <= 120) {
+      snprintf(line2, sizeof(line2), "Pump off %lus", remainingSec);
+    } else {
+      snprintf(line2, sizeof(line2), "Pump off %lum", remainingSec / 60);
+    }
   }
   lcd.print(line2);
 
