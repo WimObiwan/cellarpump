@@ -32,16 +32,16 @@ const int RELAY_PIN = 4; // Grove Relay on digital pin 4
 // Timing Configuration (in milliseconds)
 // =============================================================================
 
-const unsigned long PUMP_ON_DURATION    = 60UL * 1000;  // 60 seconds on
-const unsigned long PUMP_CYCLE_INTERVAL = 30UL * 60 * 1000; // 10 minutes between activations
-const unsigned long DISPLAY_UPDATE_INTERVAL = 500; // Update display every 500ms
-const unsigned long SENSOR_READ_INTERVAL = 2000; // Read sensor every 2 seconds
+const unsigned long PUMP_ON_DURATION    = 1000UL * 60;  // seconds on
+const unsigned long PUMP_CYCLE_INTERVAL = 1000UL * 60 * 5; // minutes between activations
+const unsigned long DISPLAY_UPDATE_INTERVAL = 500; // ms between display updates
+const unsigned long SENSOR_READ_INTERVAL = 1000UL * 2; // seconds between sensor reads
 
 // =============================================================================
 // Backlight threshold: show green when less than 5 minutes remain
 // =============================================================================
 
-const unsigned long GREEN_THRESHOLD = 5UL * 60 * 1000; // 5 minutes
+const unsigned long GREEN_THRESHOLD = 1000UL * 60 * 5; // minutes
 
 // =============================================================================
 // Global State
