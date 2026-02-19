@@ -307,6 +307,27 @@ void updateDisplay() {
 #endif // ENABLE_DISPLAY
 
 // =============================================================================
+// Preset Overlay (shows current preset on LCD with blue backlight)
+// =============================================================================
+
+#if defined(ENABLE_PRESET_BUTTON) && defined(ENABLE_DISPLAY)
+
+void showPresetOverlay() {
+  overlayStartTime = millis();
+  overlayShowing = true;
+  lcd.clear();
+  delay(2);
+#ifdef ENABLE_DISPLAY_RGB
+  lcd.setRGB(0, 0, 100); // blue during overlay
+#endif
+  lcd.print(F("Preset:"));
+  lcd.setCursor(0, 1);
+  lcd.print(PRESETS[currentPreset].label);
+}
+
+#endif // ENABLE_PRESET_BUTTON && ENABLE_DISPLAY
+
+// =============================================================================
 // PUMP / RELAY CONTROL
 // =============================================================================
 
@@ -381,6 +402,13 @@ void setup() {
 #ifdef ENABLE_PRESET_BUTTON
   pinMode(BUTTON_PIN, INPUT);
   applyPreset(loadPresetFromEEPROM());
+#ifdef ENABLE_DISPLAY
+  showPresetOverlay();
+#endif
+#ifdef ENABLE_SERIAL_LOGGING
+  Serial.print(F("Preset -> "));
+  Serial.println(PRESETS[currentPreset].label);
+#endif
 #endif
 
   initRelay();
@@ -424,15 +452,8 @@ void loop() {
           pumpStopTime = now;
 
           // Show overlay on LCD
-          overlayStartTime = now;
-          overlayShowing = true;
 #ifdef ENABLE_DISPLAY
-          lcd.clear();
-          delay(2);
-          lcd.setRGB(0, 0, 100); // blue during overlay
-          lcd.print(F("Preset:"));
-          lcd.setCursor(0, 1);
-          lcd.print(PRESETS[currentPreset].label);
+          showPresetOverlay();
 #endif
 
 #ifdef ENABLE_SERIAL_LOGGING
