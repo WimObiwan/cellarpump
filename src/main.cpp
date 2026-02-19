@@ -35,14 +35,24 @@ const int BUTTON_PIN = 3; // Grove Button on digital pin 3
 #endif
 
 // =============================================================================
-// Timing Configuration (in milliseconds)
+// Duration Literals (C++11 user-defined literals, evaluated at compile time)
+// =============================================================================
+
+constexpr unsigned long operator"" _ms(unsigned long long ms)  { return (unsigned long)ms; }
+constexpr unsigned long operator"" _s(unsigned long long s)    { return (unsigned long)(s * 1000UL); }
+constexpr unsigned long operator"" _min(unsigned long long m)  { return (unsigned long)(m * 60UL * 1000UL); }
+constexpr unsigned long operator"" _h(unsigned long long h)    { return (unsigned long)(h * 60UL * 60UL * 1000UL); }
+constexpr unsigned long operator"" _day(unsigned long long d)  { return (unsigned long)(d * 24UL * 60UL * 60UL * 1000UL); }
+
+// =============================================================================
+// Timing Configuration
 // =============================================================================
 
 // Default durations (used when preset button is disabled, or as preset 0)
-const unsigned long DEFAULT_PUMP_ON_DURATION    = 1000UL * 60;  // seconds on
-const unsigned long DEFAULT_PUMP_CYCLE_INTERVAL = 1000UL * 60 * 5; // minutes between activations
-const unsigned long DISPLAY_UPDATE_INTERVAL     = 500; // ms between display updates
-const unsigned long SENSOR_READ_INTERVAL        = 1000UL * 2; // seconds between sensor reads
+const unsigned long DEFAULT_PUMP_ON_DURATION    = 60_s;
+const unsigned long DEFAULT_PUMP_CYCLE_INTERVAL = 5_min;
+const unsigned long DISPLAY_UPDATE_INTERVAL     = 500_ms;
+const unsigned long SENSOR_READ_INTERVAL        = 2_s;
 
 // Active durations — set from preset or defaults
 unsigned long pumpOnDuration    = DEFAULT_PUMP_ON_DURATION;
@@ -52,7 +62,7 @@ unsigned long pumpCycleInterval = DEFAULT_PUMP_CYCLE_INTERVAL;
 // Backlight threshold: show green when less than 5 minutes remain
 // =============================================================================
 
-const unsigned long GREEN_THRESHOLD = 1000UL * 60 * 5; // minutes
+const unsigned long GREEN_THRESHOLD = 5_min;
 
 // =============================================================================
 // Preset Profiles (button cycles through these)
@@ -67,13 +77,13 @@ struct Preset {
 };
 
 const Preset PRESETS[] = {
-  { 60UL * 1000,  30UL * 60 * 1000,       "1: 60s / 30min"   }, // 0 — default
-  { 60UL * 1000,   2UL * 60 * 60 * 1000,  "2: 60s / 2h"      }, // 1
-  { 60UL * 1000,   6UL * 60 * 60 * 1000,  "3: 60s / 6h"      }, // 2
-  { 60UL * 1000,  24UL * 60 * 60 * 1000,  "4: 60s / 1day"    }, // 3
-  { 60UL * 1000,   1UL * 60 * 1000,       "5: 60s / 1min"    }, // 4
-  { 60UL * 1000,   4UL * 60 * 1000,       "6: 60s / 4min"    }, // 5
-  { 60UL * 1000,  10UL * 60 * 1000,       "7: 60s / 10min"   }, // 6
+  { 60_s,  30_min,  "1: 60s / 30min"   }, // 0 — default
+  { 60_s,   2_h,    "2: 60s / 2h"      }, // 1
+  { 60_s,   6_h,    "3: 60s / 6h"      }, // 2
+  { 60_s,   1_day,  "4: 60s / 1day"    }, // 3
+  { 60_s,   1_min,  "5: 60s / 1min"    }, // 4
+  { 60_s,   4_min,  "6: 60s / 4min"    }, // 5
+  { 60_s,  10_min,  "7: 60s / 10min"   }, // 6
 };
 const uint8_t PRESET_COUNT = sizeof(PRESETS) / sizeof(PRESETS[0]);
 
@@ -83,8 +93,8 @@ const int EEPROM_ADDR_PRESET = 1; // 1 byte: preset index
 const uint8_t EEPROM_MAGIC   = 0xC7; // arbitrary marker
 
 // Button state
-const unsigned long DEBOUNCE_MS = 50;
-const unsigned long OVERLAY_DISPLAY_MS = 1000UL * 2; // show preset name for 1 s
+const unsigned long DEBOUNCE_MS = 50_ms;
+const unsigned long OVERLAY_DISPLAY_MS = 2_s;
 
 uint8_t currentPreset = 0;
 bool    lastButtonState = LOW;
