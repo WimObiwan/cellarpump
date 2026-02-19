@@ -264,7 +264,13 @@ void updateDisplay() {
     if (remainingSec <= 120) {
       snprintf(line2, sizeof(line2), "Pump off %lus", remainingSec);
     } else {
-      snprintf(line2, sizeof(line2), "Pump off %lum", remainingSec / 60);
+      unsigned long remainingMin = (remainingSec + 30) / 60;
+      if (remainingMin > 120) {
+        unsigned long remainingHours = (remainingMin + 30) / 60;
+        snprintf(line2, sizeof(line2), "Pump off %luh", remainingHours);
+      } else {
+        snprintf(line2, sizeof(line2), "Pump off %lum", remainingMin);
+      }
     }
   }
   lcd.print(line2);
