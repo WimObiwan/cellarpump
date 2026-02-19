@@ -281,8 +281,11 @@ void updateDisplay() {
     setBacklightRed();
   } else {
     unsigned long elapsed = millis() - pumpStopTime;
-    if (pumpCycleInterval > GREEN_THRESHOLD
-        && elapsed >= pumpCycleInterval - GREEN_THRESHOLD) {
+    unsigned long remainingMs = 0;
+    if (elapsed < pumpCycleInterval) {
+      remainingMs = pumpCycleInterval - elapsed;
+    }
+    if (remainingMs < GREEN_THRESHOLD) {
       setBacklightGreen();
     } else {
       setBacklightOff();
