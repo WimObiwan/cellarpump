@@ -67,11 +67,13 @@ struct Preset {
 };
 
 const Preset PRESETS[] = {
-  { 60UL * 1000,  30UL * 60 * 1000,       "60s / 30min"   }, // 0 — default
-  { 60UL * 1000,  10UL * 60 * 1000,       "60s / 10min"   }, // 1
-  { 60UL * 1000,   2UL * 60 * 60 * 1000,  "60s / 2h"      }, // 2
-  { 60UL * 1000,   6UL * 60 * 60 * 1000,  "60s / 6h"      }, // 3
-  { 60UL * 1000,  24UL * 60 * 60 * 1000,  "60s / 1day"    }, // 4
+  { 60UL * 1000,  30UL * 60 * 1000,       "1: 60s / 30min"   }, // 0 — default
+  { 60UL * 1000,   2UL * 60 * 60 * 1000,  "2: 60s / 2h"      }, // 1
+  { 60UL * 1000,   6UL * 60 * 60 * 1000,  "3: 60s / 6h"      }, // 2
+  { 60UL * 1000,  24UL * 60 * 60 * 1000,  "4: 60s / 1day"    }, // 3
+  { 60UL * 1000,   1UL * 60 * 1000,       "5: 60s / 1min"    }, // 4
+  { 60UL * 1000,   4UL * 60 * 1000,       "6: 60s / 4min"    }, // 5
+  { 60UL * 1000,  10UL * 60 * 1000,       "7: 60s / 10min"   }, // 6
 };
 const uint8_t PRESET_COUNT = sizeof(PRESETS) / sizeof(PRESETS[0]);
 
@@ -82,7 +84,7 @@ const uint8_t EEPROM_MAGIC   = 0xC7; // arbitrary marker
 
 // Button state
 const unsigned long DEBOUNCE_MS = 50;
-const unsigned long OVERLAY_DISPLAY_MS = 1000; // show preset name for 1 s
+const unsigned long OVERLAY_DISPLAY_MS = 1000UL * 2; // show preset name for 1 s
 
 uint8_t currentPreset = 0;
 bool    lastButtonState = LOW;
